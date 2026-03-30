@@ -1,0 +1,143 @@
+name: Jira → Mover para DOD ao fazer merge do PR
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - development
+
+jobs:
+  jira-transition-to-dod:
+    name: Transicionar issue para DOD e registrar horas
+    runs-on: ubuntu-latest
+    # Só executa em merge real (não em fechamento sem merge)
+    if: github.event.pull_request.merged == true
+
+    steps:
+      # ── 1. Extrai o código da issue do nome da branch ─────────────────────
+      - name: Extrair issue key da branch
+        id: extract
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          ISSUE_KEY=$(echo "$BRANCH" | grep -oP '[A-Z]+-[0-9]+' | head -1)
+          if [ -z "$ISSUE_KEY" ]; then
+            echo "Nenhum issue key encontrado na branch '$BRANCH'. Pulando."
+            echo "found=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "issue_key=$ISSUE_KEY" >> $GITHUB_OUTPUT
+          echo "found=true" >> $GITHUB_OUTPUT
+          echo "✅ Issue key: $ISSUE_KEY"
+
+      # ── 2. Busca timestamp de entrada em PR no Jira ───────────────────────
+      - name: Buscar dados da issue no Jira
+        if: steps.extract.outputs.found == 'true'
+        id: jira_issue
+        run: |
+          ISSUE_KEY="${{ steps.extract.outputs.issue_key }}"
+          RESPONSE=$(curl -s \
+            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "https://${{ secrets.JIRA_DOMAIN }}/rest/api/3/issue/${ISSUE_KEY}?fields=status,updated,summary")
+          STATUS=$(echo "$RESPONSE" | jq -r '.fields.status.name')
+          UPDATED=$(echo "$RESPONSE" | jq -r '.fields.updated')
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          echo "pr_started_at=$UPDATED" >> $GITHUB_OUTPUT
+          echo "📌 Status atual: $STATUS | Entrada em PR: $UPDATED"
+
+      # ── 3. Calcula horas gastas desde a abertura do PR ────────────────────
+      - name: Calcular tempo PR → DOD
+        if: steps.extract.outputs.found == 'true'
+        id: calc_time
+        run: |
+          PR_TIME="${{ steps.jira_issue.outputs.pr_started_at }}"
+          MERGED_AT="${{ github.event.pull_request.merged_at }}"
+          PR_EPOCH=$(date -d "$PR_TIME" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "${PR_TIME:0:19}" +%s)
+          MERGED_EPOCH=$(date -d "$MERGED_AT" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "${MERGED_AT}" +%s)
+          SECONDS_ELAPSED=$((MERGED_EPOCH - PR_EPOCH))
+          HOURS=$((SECONDS_ELAPSED / 3600))
+          MINUTES=$(( (SECONDS_ELAPSED % 3600) / 60 ))
+          if [ "$SECONDS_ELAPSED" -lt 60 ]; then MINUTES=1; fi
+          TIME_SPENT="${HOURS}h ${MINUTES}m"
+          [ "$HOURS" -eq 0 ] && TIME_SPENT="${MINUTES}m"
+          echo "time_spent=$TIME_SPENT" >> $GITHUB_OUTPUT
+          echo "started_at=$PR_TIME" >> $GITHUB_OUTPUT
+          echo "⏱️ Tempo PR→DOD: $TIME_SPENT"
+
+      # ── 4. Loga worklog na issue (horas PR → DOD) ─────────────────────────
+      - name: Registrar worklog PR → DOD no Jira
+        if: steps.extract.outputs.found == 'true'
+        run: |
+          ISSUE_KEY="${{ steps.extract.outputs.issue_key }}"
+          TIME_SPENT="${{ steps.calc_time.outputs.time_spent }}"
+          STARTED="${{ steps.calc_time.outputs.started_at }}"
+          PR_URL="${{ github.event.pull_request.html_url }}"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          MERGED_BY="${{ github.event.pull_request.merged_by.login }}"
+
+          curl -s -X POST \
+            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "https://${{ secrets.JIRA_DOMAIN }}/rest/api/3/issue/${ISSUE_KEY}/worklog" \
+            -d "{
+              \"timeSpent\": \"${TIME_SPENT}\",
+              \"started\": \"${STARTED}\",
+              \"comment\": {
+                \"type\": \"doc\",
+                \"version\": 1,
+                \"content\": [{
+                  \"type\": \"paragraph\",
+                  \"content\": [{
+                    \"type\": \"text\",
+                    \"text\": \"✅ PR #${PR_NUMBER} mergeado por ${MERGED_BY} — Tempo em revisão (PR→DOD): ${TIME_SPENT}\\n${PR_URL}\"
+                  }]
+                }]
+              }
+            }"
+          echo "✅ Worklog registrado: $TIME_SPENT para $ISSUE_KEY"
+
+      # ── 5. Transiciona a issue para DOD (transition id: 41) ───────────────
+      - name: Mover issue para DOD
+        if: steps.extract.outputs.found == 'true'
+        run: |
+          ISSUE_KEY="${{ steps.extract.outputs.issue_key }}"
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "https://${{ secrets.JIRA_DOMAIN }}/rest/api/3/issue/${ISSUE_KEY}/transitions" \
+            -d '{"transition": {"id": "41"}}')
+          if [ "$RESPONSE" -eq 204 ]; then
+            echo "✅ $ISSUE_KEY movido para DOD"
+          else
+            echo "⚠️ Falha na transição (HTTP $RESPONSE)."
+          fi
+
+      # ── 6. Comenta o merge na issue Jira ──────────────────────────────────
+      - name: Comentar merge na issue Jira
+        if: steps.extract.outputs.found == 'true'
+        run: |
+          ISSUE_KEY="${{ steps.extract.outputs.issue_key }}"
+          PR_URL="${{ github.event.pull_request.html_url }}"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          MERGED_BY="${{ github.event.pull_request.merged_by.login }}"
+          MERGED_AT="${{ github.event.pull_request.merged_at }}"
+          BRANCH="${{ github.head_ref }}"
+
+          curl -s -X POST \
+            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "https://${{ secrets.JIRA_DOMAIN }}/rest/api/3/issue/${ISSUE_KEY}/comment" \
+            -d "{
+              \"body\": {
+                \"type\": \"doc\",
+                \"version\": 1,
+                \"content\": [{
+                  \"type\": \"paragraph\",
+                  \"content\": [{
+                    \"type\": \"text\",
+                    \"text\": \"✅ PR #${PR_NUMBER} mergeado em development por ${MERGED_BY} em ${MERGED_AT}\\nBranch removida: ${BRANCH}\\n${PR_URL}\"
+                  }]
+                }]
+              }
+            }"

@@ -1,0 +1,142 @@
+name: Jira → Mover para PR ao abrir Pull Request
+
+on:
+  pull_request:
+    types: [opened, reopened]
+    branches:
+      - development
+
+jobs:
+  jira-transition-to-pr:
+    name: Transicionar issue para PR e registrar horas
+    runs-on: ubuntu-latest
+
+    steps:
+      # ── 1. Extrai o código da issue (ex: SCRUM-15) do nome da branch ──────
+      - name: Extrair issue key da branch
+        id: extract
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          ISSUE_KEY=$(echo "$BRANCH" | grep -oP '[A-Z]+-[0-9]+' | head -1)
+          if [ -z "$ISSUE_KEY" ]; then
+            echo "Nenhum issue key encontrado na branch '$BRANCH'. Pulando."
+            echo "found=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          echo "issue_key=$ISSUE_KEY" >> $GITHUB_OUTPUT
+          echo "found=true" >> $GITHUB_OUTPUT
+          echo "✅ Issue key encontrado: $ISSUE_KEY"
+
+      # ── 2. Busca a issue no Jira para obter timestamp de entrada em DOR ───
+      - name: Buscar dados da issue no Jira
+        if: steps.extract.outputs.found == 'true'
+        id: jira_issue
+        run: |
+          ISSUE_KEY="${{ steps.extract.outputs.issue_key }}"
+          RESPONSE=$(curl -s \
+            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "https://${{ secrets.JIRA_DOMAIN }}/rest/api/3/issue/${ISSUE_KEY}?fields=status,updated,summary,changelog" \
+          )
+          STATUS=$(echo "$RESPONSE" | jq -r '.fields.status.name')
+          UPDATED=$(echo "$RESPONSE" | jq -r '.fields.updated')
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+          echo "dor_started_at=$UPDATED" >> $GITHUB_OUTPUT
+          echo "📌 Status atual: $STATUS | Última atualização (DOR): $UPDATED"
+
+      # ── 3. Calcula horas gastas desde a entrada em DOR ────────────────────
+      - name: Calcular tempo DOR → PR
+        if: steps.extract.outputs.found == 'true'
+        id: calc_time
+        run: |
+          DOR_TIME="${{ steps.jira_issue.outputs.dor_started_at }}"
+          NOW=$(date -u +"%Y-%m-%dT%H:%M:%S.000+0000")
+          DOR_EPOCH=$(date -d "$DOR_TIME" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%S" "${DOR_TIME:0:19}" +%s)
+          NOW_EPOCH=$(date -u +%s)
+          SECONDS_ELAPSED=$((NOW_EPOCH - DOR_EPOCH))
+          HOURS=$((SECONDS_ELAPSED / 3600))
+          MINUTES=$(( (SECONDS_ELAPSED % 3600) / 60 ))
+          # Mínimo de 1 minuto para o Jira aceitar
+          if [ "$SECONDS_ELAPSED" -lt 60 ]; then MINUTES=1; fi
+          TIME_SPENT="${HOURS}h ${MINUTES}m"
+          [ "$HOURS" -eq 0 ] && TIME_SPENT="${MINUTES}m"
+          echo "time_spent=$TIME_SPENT" >> $GITHUB_OUTPUT
+          echo "started_at=$DOR_TIME" >> $GITHUB_OUTPUT
+          echo "⏱️ Tempo DOR→PR: $TIME_SPENT"
+
+      # ── 4. Loga worklog na issue (horas DOR → PR) ─────────────────────────
+      - name: Registrar worklog DOR → PR no Jira
+        if: steps.extract.outputs.found == 'true'
+        run: |
+          ISSUE_KEY="${{ steps.extract.outputs.issue_key }}"
+          TIME_SPENT="${{ steps.calc_time.outputs.time_spent }}"
+          STARTED="${{ steps.calc_time.outputs.started_at }}"
+          PR_URL="${{ github.event.pull_request.html_url }}"
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          AUTHOR="${{ github.actor }}"
+
+          curl -s -X POST \
+            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "https://${{ secrets.JIRA_DOMAIN }}/rest/api/3/issue/${ISSUE_KEY}/worklog" \
+            -d "{
+              \"timeSpent\": \"${TIME_SPENT}\",
+              \"started\": \"${STARTED}\",
+              \"comment\": {
+                \"type\": \"doc\",
+                \"version\": 1,
+                \"content\": [{
+                  \"type\": \"paragraph\",
+                  \"content\": [{
+                    \"type\": \"text\",
+                    \"text\": \"🔀 PR aberto por ${AUTHOR}: ${PR_TITLE} — Tempo em DOR: ${TIME_SPENT}\\n${PR_URL}\"
+                  }]
+                }]
+              }
+            }"
+          echo "✅ Worklog registrado: $TIME_SPENT para $ISSUE_KEY"
+
+      # ── 5. Transiciona a issue para o status PR (transition id: 31) ───────
+      - name: Mover issue para status PR
+        if: steps.extract.outputs.found == 'true'
+        run: |
+          ISSUE_KEY="${{ steps.extract.outputs.issue_key }}"
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST \
+            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "https://${{ secrets.JIRA_DOMAIN }}/rest/api/3/issue/${ISSUE_KEY}/transitions" \
+            -d '{"transition": {"id": "31"}}')
+          if [ "$RESPONSE" -eq 204 ]; then
+            echo "✅ $ISSUE_KEY movido para PR"
+          else
+            echo "⚠️ Falha na transição (HTTP $RESPONSE). Issue pode já estar em PR ou DOD."
+          fi
+
+      # ── 6. Adiciona comentário com link do PR na issue ────────────────────
+      - name: Comentar PR na issue Jira
+        if: steps.extract.outputs.found == 'true'
+        run: |
+          ISSUE_KEY="${{ steps.extract.outputs.issue_key }}"
+          PR_URL="${{ github.event.pull_request.html_url }}"
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          AUTHOR="${{ github.actor }}"
+          BRANCH="${{ github.head_ref }}"
+
+          curl -s -X POST \
+            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            "https://${{ secrets.JIRA_DOMAIN }}/rest/api/3/issue/${ISSUE_KEY}/comment" \
+            -d "{
+              \"body\": {
+                \"type\": \"doc\",
+                \"version\": 1,
+                \"content\": [{
+                  \"type\": \"paragraph\",
+                  \"content\": [{
+                    \"type\": \"text\",
+                    \"text\": \"🔀 Pull Request #${PR_NUMBER} aberto por ${AUTHOR}\\nBranch: ${BRANCH}\\n${PR_URL}\"
+                  }]
+                }]
+              }
+            }"
