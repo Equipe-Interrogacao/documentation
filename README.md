@@ -32,11 +32,11 @@ O objetivo principal é apoiar governo e usuários na tomada de decisão, fiscal
 ### 🏁 Entregas de Sprints
 
 Cada entrega será realizada a partir da criação de uma **tag** em cada repositório (Front, Back), além da criação de uma branch no repositório da documentação com um relatório completo de tudo o que foi desenvolvido naquela sprint. Observe a relação a seguir:
-| Sprint | Previsão de entrega | Status | Histórico |
-|:--:|:----------:|:-------------------|:-------------------------------------------------:|
-| 01 | — | 🚧 Em andamento | — |
-| 02 | — | 🕐 Aguardando | — |
-| 03 | — | 🕐 Aguardando | — |
+| Sprint | Período | Meta | Status |
+|:--:|:----------:|:-----------------------------------|:-----------:|
+| 01 | 16/03 a 05/04 | Fundação, dados SICAR e mapa — Buscar propriedade CAR e ver polígono no mapa | 🚧 Em andamento |
+| 02 | 13/04 a 03/05 | Cruzamento de dados e análise ASG — Indicadores ASG com fontes rastreáveis e relatório básico | 🕐 Aguardando |
+| 03 | 11/05 a 31/05 | PLN, busca semântica e polimento — Usuário faz perguntas em linguagem natural e recebe respostas com fontes | 🕐 Aguardando |
 
 → [Voltar ao topo](#topo)
 
@@ -44,9 +44,25 @@ Cada entrega será realizada a partir da criação de uma **tag** em cada reposi
 
 ## :dart: Backlogs, Épicos & User Stories
 
-<div align="center">
-   <!-- Imagens do backlog serão adicionadas aqui -->
-</div>
+### Product Backlog (MVP — 3 sprints)
+
+| Rank | Prioridade | User Story | Estimativa | Sprint |
+|------|------------|------------|------------|--------|
+| 1 | Alta | Como operador, quero uma arquitetura base em microsserviços (Python, Docker Compose, variáveis de ambiente) configurável sem alterar código. | 8 | 1 |
+| 2 | Alta | Como analista, quero que os dados do SICAR-SP (shapefiles, geometrias e atributos) sejam ingeridos e processados para basear análises ASG. | 8 | 1 |
+| 3 | Alta | Como analista, quero uma API de busca por código CAR que retorne dados básicos e GeoJSON do polígono, com fonte rastreável (SICAR). | 5 | 1 |
+| 4 | Alta | Como analista, quero uma tela de busca por código CAR onde vejo os dados básicos e o polígono renderizado no mapa. | 8 | 1 |
+| 5 | Média | Como desenvolvedor, quero pipeline de CI/CD, testes e documentação inicial para garantir qualidade e deploy. | 5 | 1 |
+| 6 | Alta | Como analista, quero dados de desmatamento e queimadas do INPE (PRODES, DETER, Queimadas) filtrados para SP para análises ambientais. | 8 | 2 |
+| 7 | Alta | Como analista, quero cruzar o polígono do CAR com alertas do INPE para identificar passivos ambientais, com fonte e data do dado. | 8 | 2 |
+| 8 | Alta | Como analista, quero dados de UCs, Terras Indígenas, Assentamentos e Quilombolas para verificar sobreposição com áreas protegidas. | 8 | 2 |
+| 9 | Alta | Como gestor, quero um relatório ASG consolidado com indicadores e fontes de cada dado, compatível com OGC/QGIS. | 8 | 2 |
+| 10 | Alta | Como analista, quero visualizar camadas no mapa e um painel lateral com resumo dos indicadores ASG. | 7 | 2 |
+| 11 | Alta | Como analista, quero que o sistema processe perguntas em linguagem natural e identifique a propriedade consultada e o tipo de análise. | 8 | 3 |
+| 12 | Alta | Como analista, quero uma interface onde digito perguntas em texto livre e recebo respostas com dados relevantes e fontes citadas. | 8 | 3 |
+| 13 | Alta | Como analista, quero que o sistema interprete a intenção da pergunta e chame o microsserviço adequado, retornando resposta consolidada. | 8 | 3 |
+| 14 | Média | Como analista, quero que a resposta ou relatório inclua visualização da área de interesse com imagens de satélite. | 5 | 3 |
+| 15 | Média | Como usuário, quero respostas entre 1 e 10 segundos, testes de integração, ajustes de UX e documentação da API. | 8 | 3 |
 
 → [Voltar ao topo](#topo)
 
@@ -77,9 +93,10 @@ Linguagens, bibliotecas e tecnologias usadas na construção do projeto:
 
 |    Função     | Nome                           |                                                                                                                                                      LinkedIn & GitHub                                                                                                                                                      |
 | :-----------: | :----------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
-| Product Owner | Jonas Rafael Siqueira Ribeiro  | [![Linkedin Badge](https://img.shields.io/badge/Linkedin-blue?style=flat-square&logo=Linkedin&logoColor=white)](https://www.linkedin.com/in/jonasrsribeiro/) [![GitHub Badge](https://img.shields.io/badge/GitHub-111217?style=flat-square&logo=github&logoColor=white)](https://github.com/jonasrsribeiro) |
-| Scrum Master  | —                              | — |
-|   Dev Team    | —                              | — |
+| Product Owner | Jonas Ribeiro  | [![Linkedin Badge](https://img.shields.io/badge/Linkedin-blue?style=flat-square&logo=Linkedin&logoColor=white)](https://www.linkedin.com/in/jonasrsribeiro/) [![GitHub Badge](https://img.shields.io/badge/GitHub-111217?style=flat-square&logo=github&logoColor=white)](https://github.com/jonasrsribeiro) |
+| Scrum Master  | Bruno Ferdinand                | — |
+| Dev Team      | Erika Dias Ribeiro             | [![Linkedin Badge](https://img.shields.io/badge/Linkedin-blue?style=flat-square&logo=Linkedin&logoColor=white)](https://www.linkedin.com/in/erika-dias-608359266/) [![GitHub Badge](https://img.shields.io/badge/GitHub-111217?style=flat-square&logo=github&logoColor=white)](https://github.com/ErikaDias2) |
+| Dev Team      | Diogo Palharini                | — |
 
 → [Voltar ao topo](#topo)
 
@@ -87,8 +104,8 @@ Linguagens, bibliotecas e tecnologias usadas na construção do projeto:
 
 ## :link: Links úteis
 
-- Repositório Frontend: —
-- Repositório Backend: —
+- Repositório Frontend: https://github.com/Equipe-Interrogacao/frontend
+- Repositório Backend: https://github.com/Equipe-Interrogacao/backend
 
    <br>
 
