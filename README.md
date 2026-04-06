@@ -94,9 +94,9 @@ Linguagens, bibliotecas e tecnologias usadas na construção do projeto:
 |    Função     | Nome                           |                                                                                                                                                      LinkedIn & GitHub                                                                                                                                                      |
 | :-----------: | :----------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
 | Product Owner | Jonas Ribeiro  | [![Linkedin Badge](https://img.shields.io/badge/Linkedin-blue?style=flat-square&logo=Linkedin&logoColor=white)](https://www.linkedin.com/in/jonasrsribeiro/) [![GitHub Badge](https://img.shields.io/badge/GitHub-111217?style=flat-square&logo=github&logoColor=white)](https://github.com/jonasrsribeiro) |
-| Scrum Master  | Bruno Ferdinand                | — |
+| Scrum Master  | Bruno Fernando                | [![Linkedin Badge](https://img.shields.io/badge/Linkedin-blue?style=flat-square&logo=Linkedin&logoColor=white)](https://www.linkedin.com/in/bruno-campos-97560b231?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app) [![GitHub Badge](https://img.shields.io/badge/GitHub-111217?style=flat-square&logo=github&logoColor=white)](https://github.com/BrunoFerCam) |
 | Dev Team      | Erika Dias Ribeiro             | [![Linkedin Badge](https://img.shields.io/badge/Linkedin-blue?style=flat-square&logo=Linkedin&logoColor=white)](https://www.linkedin.com/in/erika-dias-608359266/) [![GitHub Badge](https://img.shields.io/badge/GitHub-111217?style=flat-square&logo=github&logoColor=white)](https://github.com/ErikaDias2) |
-| Dev Team      | Diogo Palharini                | — |
+| Dev Team      | Diogo Palharini                | [![GitHub Badge](https://img.shields.io/badge/GitHub-111217?style=flat-square&logo=github&logoColor=white)](https://github.com/DiogoPalharini) |
 
 → [Voltar ao topo](#topo)
 
