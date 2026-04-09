@@ -31,12 +31,13 @@ O objetivo principal é apoiar governo e usuários na tomada de decisão, fiscal
 
 ### 🏁 Entregas de Sprints
 
-Cada entrega será realizada a partir da criação de uma **tag** em cada repositório (Front, Back), além da criação de uma branch no repositório da documentação com um relatório completo de tudo o que foi desenvolvido naquela sprint. Observe a relação a seguir:
+Cada entrega será realizada a partir da criação de uma **tag** em cada repositório (Front, Back), além da criação de uma branch no repositório da documentação com um relatório completo de tudo o que foi desenvolvido naquela sprint.
+
 | Sprint | Período | Meta | Status |
 |:--:|:----------:|:-----------------------------------|:-----------:|
-| 01 | 16/03 a 05/04 | Fundação, dados SICAR e mapa — Buscar propriedade CAR e ver polígono no mapa | 🚧 Em andamento |
-| 02 | 13/04 a 03/05 | Cruzamento de dados e análise ASG — Indicadores ASG com fontes rastreáveis e relatório básico | 🕐 Aguardando |
-| 03 | 11/05 a 31/05 | PLN, busca semântica e polimento — Usuário faz perguntas em linguagem natural e recebe respostas com fontes | 🕐 Aguardando |
+| 01 | 16/03 a 05/04 | Fundação, dados SICAR e mapa — Buscar propriedade CAR e ver polígono no mapa | Concluído |
+| 02 | 13/04 a 03/05 | Cruzamento de dados, análise ASG e PLN básico — Indicadores ASG com fontes rastreáveis, relatório básico e chatbot com linguagem natural simples | 🚧 Em andamento |
+| 03 | 11/05 a 31/05 | Busca semântica avançada e polimento — Consultas complexas em linguagem natural, imagens de satélite e refinamento geral | 🕐 Aguardando |
 
 → [Voltar ao topo](#topo)
 
@@ -58,11 +59,109 @@ Cada entrega será realizada a partir da criação de uma **tag** em cada reposi
 | 8 | Alta | Como analista, quero dados de UCs, Terras Indígenas, Assentamentos e Quilombolas para verificar sobreposição com áreas protegidas. | 8 | 2 |
 | 9 | Alta | Como gestor, quero um relatório ASG consolidado com indicadores e fontes de cada dado, compatível com OGC/QGIS. | 8 | 2 |
 | 10 | Alta | Como analista, quero visualizar camadas no mapa e um painel lateral com resumo dos indicadores ASG. | 7 | 2 |
-| 11 | Alta | Como analista, quero que o sistema processe perguntas em linguagem natural e identifique a propriedade consultada e o tipo de análise. | 8 | 3 |
-| 12 | Alta | Como analista, quero uma interface onde digito perguntas em texto livre e recebo respostas com dados relevantes e fontes citadas. | 8 | 3 |
-| 13 | Alta | Como analista, quero que o sistema interprete a intenção da pergunta e chame o microsserviço adequado, retornando resposta consolidada. | 8 | 3 |
-| 14 | Média | Como analista, quero que a resposta ou relatório inclua visualização da área de interesse com imagens de satélite. | 5 | 3 |
-| 15 | Média | Como usuário, quero respostas entre 1 e 10 segundos, testes de integração, ajustes de UX e documentação da API. | 8 | 3 |
+| 11 | Alta | Como administrador, quero um botão protegido por login e senha que abra um modal de atualização dos bancos de dados, onde o sistema verifica via endpoint se há dados novos nas APIs públicas (comparando contagem de registros ou versão) antes de disparar as APIs de ingestão, evitando reprocessamento desnecessário. | 8 | 2 |
+| 12 | Alta | Como analista, quero digitar perguntas simples em linguagem natural (ex.: "tem desmatamento nessa área?") e receber uma resposta clara com os dados relevantes — o sistema deve identificar palavras-chave (PLN simples) para direcionar a consulta ao microsserviço correto. | 8 | 2 |
+| 13 | Alta | Como analista, quero uma interface onde digito perguntas em texto livre e recebo respostas com dados relevantes e fontes citadas. | 8 | 3 |
+| 14 | Alta | Como analista, quero que o sistema interprete a intenção da pergunta e chame o microsserviço adequado, retornando resposta consolidada. | 8 | 3 |
+| 15 | Média | Como analista, quero que a resposta ou relatório inclua visualização da área de interesse com imagens de satélite. | 5 | 3 |
+| 16 | Média | Como usuário, quero respostas entre 1 e 10 segundos, testes de integração, ajustes de UX e documentação da API. | 8 | 3 |
+
+---
+
+### 🗂️ Sprint 1 — Fundação, dados SICAR e mapa
+**Período:** 16/03 a 05/04
+**Meta:** Buscar propriedade CAR e ver polígono no mapa
+
+#### Tópicos
+
+**1. Infraestrutura & Arquitetura Base**
+- Configuração do ambiente com Docker Compose e microsserviços Python
+- Variáveis de ambiente centralizadas — sistema configurável sem alterar código
+- Pipeline de CI/CD, testes automatizados e documentação inicial
+
+**2. Ingestão de Dados SICAR-SP**
+- Download e processamento dos shapefiles do SICAR para São Paulo
+- Armazenamento de geometrias e atributos no banco PostGIS
+- Fonte de dados rastreável vinculada a cada registro
+
+**3. API de Busca por CAR**
+- Endpoint de busca por código CAR retornando dados básicos e GeoJSON do polígono
+- Fonte SICAR identificada e retornada junto com a resposta
+
+**4. Interface — Tela de Busca e Mapa**
+- Tela de busca por código CAR
+- Renderização do polígono da propriedade no mapa interativo
+- Exibição dos dados básicos ao lado do mapa
+
+---
+
+### 🗂️ Sprint 2 — Cruzamento de dados, análise ASG e PLN básico
+**Período:** 13/04 a 03/05
+**Meta:** Indicadores ASG com fontes rastreáveis, relatório básico e chatbot com linguagem natural simples
+
+#### Tópicos
+
+**1. Ingestão de Dados Ambientais (INPE)**
+- Ingestão de dados de desmatamento (PRODES) e alertas (DETER) filtrados para SP
+- Ingestão de dados de queimadas do INPE para SP
+- Data e fonte de cada dado preservados para rastreabilidade
+
+**2. Ingestão de Dados Socioambientais (ICMBio / FUNAI / INCRA / FCP)**
+- Unidades de Conservação (UCs) do ICMBio
+- Terras Indígenas (FUNAI) e Assentamentos (INCRA)
+- Territórios Quilombolas (FCP)
+
+**3. Cruzamento ASG e Análise**
+- Cruzamento do polígono CAR com alertas INPE para identificar passivos ambientais
+- Verificação de sobreposição com áreas protegidas (UCs, TIs, assentamentos, quilombolas)
+- Indicadores ASG calculados com data e fonte de cada dado
+
+**4. Relatório ASG e Visualização no Mapa**
+- Relatório consolidado com indicadores e fontes, compatível com OGC/QGIS
+- Camadas temáticas sobrepostas no mapa interativo
+- Painel lateral com resumo dos indicadores ASG
+
+**5. Painel de Atualização de Dados (Admin)**
+- Botão protegido por login e senha na interface administrativa
+- Modal de atualização: lista todos os bancos de dados disponíveis
+- Verificação prévia via endpoint: compara contagem de registros ou versão/hash da API pública antes de acionar a ingestão
+- Disparo seletivo das APIs de ingestão apenas onde há dados novos ou divergência detectada
+- Log de resultado por fonte (atualizado / sem alteração / erro)
+
+**6. Chatbot PLN Simples**
+- Campo de texto livre para o usuário digitar perguntas simples (ex.: "tem desmatamento nessa área?", "essa propriedade tem sobreposição com terra indígena?")
+- Processamento por PLN simples: extração de palavras-chave para identificar a propriedade consultada e o tipo de análise solicitada
+- Roteamento da pergunta ao microsserviço adequado com retorno de resposta clara e com fonte citada
+
+---
+
+### 🗂️ Sprint 3 — Busca semântica avançada e polimento
+**Período:** 11/05 a 31/05
+**Meta:** Consultas complexas em linguagem natural, imagens de satélite e refinamento geral
+
+#### Tópicos
+
+**1. PLN Avançado e Busca Semântica**
+- Interpretação de intenção em perguntas complexas e ambíguas
+- Roteamento dinâmico para o microsserviço correto com base na semântica da pergunta
+- Resposta consolidada com dados e fontes citadas
+
+**2. Interface de Chat Avançada**
+- Interface dedicada para perguntas em texto livre
+- Respostas estruturadas com dados relevantes, fontes e links para as camadas no mapa
+- Histórico de consultas na sessão
+
+**3. Visualização com Imagens de Satélite**
+- Exibição de imagens de satélite da área de interesse na resposta ou relatório
+- Integração com a camada de mapa correspondente
+
+**4. Polimento, Performance e Qualidade**
+- Meta de resposta entre 1 e 10 segundos para consultas comuns
+- Testes de integração end-to-end
+- Ajustes de UX e acessibilidade
+- Documentação completa da API (OpenAPI/Swagger)
+
+---
 
 → [Voltar ao topo](#topo)
 
