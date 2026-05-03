@@ -36,7 +36,7 @@ Cada entrega será realizada a partir da criação de uma **tag** em cada reposi
 | Sprint | Período | Meta | Status |
 |:--:|:----------:|:-----------------------------------|:-----------:|
 | 01 | 16/03 a 05/04 | Fundação, dados SICAR e mapa — Buscar propriedade CAR e ver polígono no mapa | Concluído |
-| 02 | 13/04 a 03/05 | Cruzamento de dados, análise ASG e PLN básico — Indicadores ASG com fontes rastreáveis, relatório básico e chatbot com linguagem natural simples | 🚧 Em andamento |
+| 02 | 13/04 a 03/05 | Cruzamento de dados, análise ASG e PLN básico — Indicadores ASG com fontes rastreáveis, relatório básico e chatbot com linguagem natural simples | Concluído |
 | 03 | 11/05 a 31/05 | Busca semântica avançada e polimento — Consultas complexas em linguagem natural, imagens de satélite e refinamento geral | 🕐 Aguardando |
 
 → [Voltar ao topo](#topo)
